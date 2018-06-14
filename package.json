@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:rollingstone/BotFramework-DirectLineJS.git"
+    "url": "git+https://github.com/rollingstone/BotFramework-DirectLineJS.git"
   },
   "author": "Microsoft Corp",
   "license": "MIT",
