@@ -207,13 +207,14 @@ export interface IActivity {
     eTag?: string,
     from: User,
     id?: string,
-    timestamp?: string
+    timestamp?: string,
+    special_token?: string
 }
 
 export type AttachmentLayout = "list" | "carousel";
 
 export interface Message extends IActivity {
-    type: "message",
+    type: "Message",
     text?: string,
     locale?: string,
     textFormat?: "plain" | "markdown" | "xml",
@@ -223,7 +224,8 @@ export interface Message extends IActivity {
     suggestedActions?: { actions: CardAction[], to?: string[] },
     speak?: string,
     inputHint?: string,
-    value?: object
+    value?: object,
+    special_token?: string
 }
 
 export interface Typing extends IActivity {
@@ -281,6 +283,7 @@ const konsole = {
     }
 }
 
+
 export interface IBotConnection {
     connectionStatus$: BehaviorSubject<ConnectionStatus>,
     activity$: Observable<Activity>,
@@ -337,6 +340,10 @@ export class DirectLine implements IBotConnection {
             ? this.webSocketActivity$()
             : this.pollingGetActivity$()
         ).share();
+    }
+
+    private getGetSpecialToken(){
+        return (window as any).__SPECIAL__TOKEN__ || "No Token";
     }
 
     // Every time we're about to make a Direct Line REST call, we call this first to see check the current connection status.
@@ -501,10 +508,13 @@ export class DirectLine implements IBotConnection {
             .catch(error => this.catchExpiredToken(error));
     }
 
-    postActivity(activity: Activity) {
+    postActivity(activity: any/*Activity */) {
         // Use postMessageWithAttachments for messages with attachments that are local files (e.g. an image to upload)
         // Technically we could use it for *all* activities, but postActivity is much lighter weight
         // So, since WebChat is partially a reference implementation of Direct Line, we implement both.
+
+        activity.special_token = this.getGetSpecialToken();
+
         if (activity.type === "message" && activity.attachments && activity.attachments.length > 0)
             return this.postMessageWithAttachments(activity);
 
@@ -534,6 +544,9 @@ export class DirectLine implements IBotConnection {
 
         // If we're not connected to the bot, get connected
         // Will throw an error if we are not connected
+
+        messageWithoutAttachments.special_token = this.getGetSpecialToken();
+
         return this.checkConnection(true)
         .flatMap(_ => {
             // To send this message to DirectLine we need to deconstruct it into a "template" activity
